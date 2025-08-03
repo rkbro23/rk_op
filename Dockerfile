@@ -1,19 +1,15 @@
-# Lightweight PHP image
 FROM php:8.2-alpine
 
-# Install dependencies
-RUN apk add --no-cache \
-    curl \
-    && docker-php-ext-install sockets
-
-# Copy files
+# Create directory first
 WORKDIR /var/www/html
-COPY src/ .
+RUN mkdir -p /var/www/html/proxy
 
-# Health check (every 2 mins)
+# Copy only needed files
+COPY proxy/ /var/www/html/proxy/
+
+# Health check (uses lightweight wget instead of curl)
 HEALTHCHECK --interval=2m --timeout=3s \
-    CMD curl -f http://localhost/proxy/healthcheck || exit 1
+    CMD wget -q --spider http://localhost/proxy/healthcheck || exit 1
 
-# Run PHP server
 EXPOSE 8080
-CMD ["php", "-S", "0.0.0.0:8080"]
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/html"]
